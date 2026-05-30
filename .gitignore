@@ -1,0 +1,35 @@
+# --- Secrets / local config (NEVER commit) ---
+.env
+.env.*
+!.env.example
+
+# --- Python bytecode / caches ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+
+# --- Packaging / build artifacts ---
+*.egg-info/
+build/
+dist/
+*.egg
+
+# --- Tooling / editor ---
+.omc/
+.idea/
+.vscode/
+
+# --- OS noise ---
+.DS_Store
+Thumbs.db
+
+# --- Runtime logs ---
+*.log
