@@ -66,12 +66,13 @@ class Notifier:
         self._last_sent[key] = now
         logger.info(
             "signal symbol=%s direction=%s slope=%.6f r_squared=%.3f "
-            "roc=%.4f price=%s timestamp=%d",
+            "roc=%.4f atr_move=%.2f price=%s timestamp=%d",
             signal.symbol,
             signal.direction,
             signal.slope,
             signal.r_squared,
             signal.roc,
+            signal.atr_move,
             signal.price,
             signal.timestamp,
         )
@@ -115,7 +116,8 @@ class Notifier:
         return (
             f"{marker} <b>{signal.symbol}</b> {signal.direction.upper()}\n"
             f"price: <code>{signal.price:g}</code>\n"
-            f"roc: <code>{signal.roc * 100:+.2f}%</code>\n"
+            f"roc: <code>{signal.roc * 100:+.2f}%</code>  "
+            f"atr: <code>{signal.atr_move:+.2f}×</code>\n"
             f"slope: <code>{signal.slope:+.6f}</code>  "
             f"R²: <code>{signal.r_squared:.3f}</code>\n"
             f"<i>{when_str}</i>"

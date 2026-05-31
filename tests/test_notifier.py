@@ -21,6 +21,7 @@ class _FakeSignal:
     slope: float
     r_squared: float
     roc: float
+    atr_move: float
     price: float
     timestamp: int
 
@@ -32,6 +33,7 @@ def _signal(direction: str = "up") -> _FakeSignal:
         slope=0.0123,
         r_squared=0.91,
         roc=0.012,
+        atr_move=4.2,
         price=65000.0,
         timestamp=1_700_000_000_000,
     )

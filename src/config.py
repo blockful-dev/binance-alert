@@ -37,12 +37,16 @@ class Settings(BaseSettings):
     ema_fast: int = Field(default=9, ge=1, description="Fast EMA period.")
     ema_slow: int = Field(default=21, ge=2, description="Slow EMA period.")
     roc_min: float = Field(default=0.008, ge=0.0, description="Min absolute cumulative ROC over window (fraction).")
+    atr_mult: float = Field(
+        default=3.0, ge=0.0, description="Min net move in ATR (volatility) units; adapts magnitude to each symbol's range."
+    )
     volume_mult: float = Field(default=1.2, ge=0.0, description="Min last-candle volume / window-avg volume.")
 
     # --- Detection condition toggles ---
     use_r_squared: bool = True
     use_ema: bool = True
     use_roc: bool = True
+    use_atr: bool = True
     use_volume: bool = True
 
     # --- Universe liquidity filter ---
