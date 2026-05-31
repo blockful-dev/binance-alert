@@ -24,7 +24,7 @@ WSCollector ──  <symbol>@kline_<interval>   (+ !markPrice@arr, subscribed bu
 SymbolStore ── per-symbol rolling window of CLOSED candles (deque)
    ▲                          │  worker drains the queue; on each candle close:
    │ REST warm-up (once)      ▼
-RestClient ──────────────►  TrendDetector ── slope+R² / EMA / ROC / volume  (AND)
+RestClient ──────────────►  TrendDetector ── slope+R² / EMA / ROC / ATR / volume  (AND)
  (exchangeInfo, ticker/24hr,    │
   klines; token-bucket)         ▼
                             Notifier ── 15m cooldown → console + Telegram (5s timeout)
@@ -91,6 +91,7 @@ All of the following gates must pass, in order:
    | **R²** (`USE_R_SQUARED`) | `≥ 0.75` | the trend is *clean* (points hug the trend line) |
    | **EMA alignment** (`USE_EMA`) | `9 / 21` | up: `close > EMA9 > EMA21`; down: reversed |
    | **Cumulative ROC** (`USE_ROC`) | `≥ 0.8%` | window start→end move, sign matches direction |
+   | **ATR move** (`USE_ATR`) | `≥ 3.0×` | net window move in ATR (volatility) units — adapts the magnitude check to each symbol's own range |
    | **Volume** (`USE_VOLUME`) | `≥ 1.2×` | the just-closed candle's volume ≥ window-average × 1.2 |
 
 5. **Not within cooldown** — no alert for the same `(symbol, direction)` in the
@@ -98,9 +99,12 @@ All of the following gates must pass, in order:
 
 Then: always logged to the console, and pushed to Telegram if configured.
 
-> The AND of four conditions is intentionally strict to suppress minute-bar
+> The AND of five conditions is intentionally strict to suppress minute-bar
 > noise — alerts are relatively rare. The **volume gate on the triggering
-> candle** is usually the most selective. See *Tuning* below to loosen it.
+> candle** is usually the most selective. ROC checks a *fixed* percentage; the
+> **ATR move** checks the same move in units of the symbol's own volatility, so
+> a fixed threshold means the same thing on BTC and a low-cap alt. See *Tuning*
+> below to loosen them.
 
 ---
 
@@ -221,8 +225,9 @@ field name). Every value has a default.
 | `R_SQUARED_MIN` | `0.75` | Min R² for a "clean" trend. |
 | `EMA_FAST` / `EMA_SLOW` | `9` / `21` | EMA periods (`fast < slow`). |
 | `ROC_MIN` | `0.008` | Min cumulative ROC over the window (fraction, 0.8%). |
+| `ATR_MULT` | `3.0` | Min net move in ATR (volatility) units — volatility-normalized magnitude, adapts to each symbol's range. |
 | `VOLUME_MULT` | `1.2` | Min last-candle-volume / window-avg-volume. |
-| `USE_R_SQUARED` / `USE_EMA` / `USE_ROC` / `USE_VOLUME` | `true` | Per-condition toggles. |
+| `USE_R_SQUARED` / `USE_EMA` / `USE_ROC` / `USE_ATR` / `USE_VOLUME` | `true` | Per-condition toggles. |
 | `MIN_QUOTE_VOLUME_24H` | `500000` | Liquidity filter — drop symbols below this 24h quote volume (USDT). |
 | `COOLDOWN_MINUTES` | `15` | Per-symbol+direction alert cooldown. |
 | `TELEGRAM_BOT_TOKEN` | _(empty)_ | Set with `TELEGRAM_CHAT_ID` to enable Telegram; else console only. |
@@ -241,8 +246,9 @@ splits the budget.
 ### Tuning alert frequency
 
 - **More alerts** (looser): lower `R_SQUARED_MIN` (e.g. `0.6`), lower `ROC_MIN`
-  (e.g. `0.004`), lower `VOLUME_MULT` (e.g. `1.0`) or `USE_VOLUME=false`, smaller
-  `WINDOW_SIZE`, lower `MIN_QUOTE_VOLUME_24H`.
+  (e.g. `0.004`), lower `ATR_MULT` (e.g. `2.0`) or `USE_ATR=false`, lower
+  `VOLUME_MULT` (e.g. `1.0`) or `USE_VOLUME=false`, smaller `WINDOW_SIZE`, lower
+  `MIN_QUOTE_VOLUME_24H`.
 - **Fewer / higher-quality alerts** (stricter): raise the same thresholds, or
   raise `COOLDOWN_MINUTES`.
 - Disable any single condition with its `USE_*=false` toggle.
